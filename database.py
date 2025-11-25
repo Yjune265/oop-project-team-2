@@ -67,7 +67,7 @@ TARGET_NUTRIENTS_FOR_MINING = [
 ]
 
 
-# --- 1. 데이터베이스 스키마 생성 (수정됨: 3개 테이블 추가) ---
+# --- 1. 데이터베이스 스키마 생성 (수정됨: 9개 테이블) ---
 def create_database_schema():
     if os.path.exists(DB_FILE):
         try:
@@ -101,39 +101,7 @@ def create_database_schema():
         );
     ''')
 
-    # --- [신규 추가] 클래스 다이어그램 반영 테이블 3종 ---
-
-    # 1. 성분 간 상호작용 규칙 테이블 (InteractionRule 반영) - 핵심!
-    cursor.execute('''
-        CREATE TABLE T_ING_INTERACTION (
-            interaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ingredient_id_1 INTEGER NOT NULL, -- 첫 번째 성분 ID
-            ingredient_id_2 INTEGER NOT NULL, -- 두 번째 성분 ID
-            interaction_type VARCHAR(50),     -- 상호작용 유형 (예: 흡수방해, 부작용증가)
-            risk_level INTEGER DEFAULT 1,     -- 위험도 (1:낮음, 2:중간, 3:높음)
-            description TEXT NOT NULL,        -- 경고 메시지
-            FOREIGN KEY (ingredient_id_1) REFERENCES T_INGREDIENT(ingredient_id),
-            FOREIGN KEY (ingredient_id_2) REFERENCES T_INGREDIENT(ingredient_id),
-            UNIQUE(ingredient_id_1, ingredient_id_2) -- 중복 정의 방지
-        );
-    ''')
-
-    # 2. 제품-성분 연결 테이블 (Supplement-Ingredient 다대다 관계 반영)
-    # 참고: 현재는 데이터 마이닝으로 텍스트만 수집하므로 이 테이블은 비어있게 됩니다. 추후 고도화 시 활용합니다.
-    cursor.execute('''
-        CREATE TABLE T_PRODUCT_ING_LINK (
-            link_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            product_id INTEGER NOT NULL,
-            ingredient_id INTEGER NOT NULL,
-            amount_per_serving TEXT,        -- 1회 섭취량당 함량 (선택사항)
-            FOREIGN KEY (product_id) REFERENCES T_PRODUCT(product_id),
-            FOREIGN KEY (ingredient_id) REFERENCES T_INGREDIENT(ingredient_id),
-            UNIQUE(product_id, ingredient_id)
-        );
-    ''')
-
-    # 3. 추천 결과 저장 테이블 (RecommendationReport 반영)
-    # 비회원이라도 추천 이력을 남겨 통계나 재확인 용도로 사용합니다.
+    # --- [유지] 추천 결과 저장 테이블 (통계용) ---
     cursor.execute('''
         CREATE TABLE T_REC_RESULT (
             result_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -146,7 +114,7 @@ def create_database_schema():
         );
     ''')
 
-    print("총 11개 테이블 스키마 생성 완료.") # 8개 -> 11개로 변경
+    print("총 9개 테이블 스키마 생성 완료.") # 11개 -> 9개로 변경
     conn.commit()
     conn.close()
 
