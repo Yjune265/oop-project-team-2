@@ -7,14 +7,14 @@ import time
 # === 설정 및 상수 ===
 DB_FILE = 'supplements_final.db'
 
-# API 키 설정
+# API 키 설정 (사용자 제공 키 적용됨)
 FOOD_SAFETY_KEY = "5867d3cf82cb40f7b3e1"
 DRUG_INFO_KEY = "57bc1b35a117a2e11957d9f69efcd00889ed2caab2780081c0ac2432c21c0275"
 
-# API별 배치 사이즈
-BATCH_SIZE_FOOD = 500
-BATCH_SIZE_PROD = 1000
-BATCH_SIZE_DRUG = 100
+# API별 배치 사이즈 설정
+BATCH_SIZE_FOOD = 500   # 원료 API
+BATCH_SIZE_DRUG = 100   # 의약품 API
+BATCH_SIZE_PROD = 500   # 제품 API (안정성을 위해 500으로 설정)
 
 # 헤더 공통 설정
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
@@ -67,7 +67,7 @@ TARGET_NUTRIENTS_FOR_MINING = [
 ]
 
 
-# --- 1. 데이터베이스 스키마 생성 (수정됨: 9개 테이블) ---
+# --- 1. 데이터베이스 스키마 생성 (9개 테이블) ---
 def create_database_schema():
     if os.path.exists(DB_FILE):
         try:
@@ -81,7 +81,7 @@ def create_database_schema():
     cursor = conn.cursor()
     cursor.execute("PRAGMA foreign_keys = ON;")
 
-    # --- 기존 8개 테이블 ---
+    # --- 기본 테이블 생성 ---
     cursor.execute('''CREATE TABLE T_USER_SELECTION (selection_id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL UNIQUE, group_name VARCHAR(100));''')
     cursor.execute('''CREATE TABLE T_INGREDIENT (ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT, name_kor VARCHAR(100) NOT NULL UNIQUE, summary TEXT, rda TEXT, ul TEXT, source_type VARCHAR(20));''')
     cursor.execute('''CREATE TABLE T_REC_MAPPING (mapping_id INTEGER PRIMARY KEY AUTOINCREMENT, selection_id INTEGER NOT NULL, ingredient_id INTEGER NOT NULL, base_score INTEGER DEFAULT 10, FOREIGN KEY (selection_id) REFERENCES T_USER_SELECTION(selection_id), FOREIGN KEY (ingredient_id) REFERENCES T_INGREDIENT(ingredient_id), UNIQUE(selection_id, ingredient_id));''')
@@ -101,20 +101,21 @@ def create_database_schema():
         );
     ''')
 
-    # --- [유지] 추천 결과 저장 테이블 (통계용) ---
+    # --- 추천 결과 저장 테이블 (추천 이유 컬럼 포함) ---
     cursor.execute('''
         CREATE TABLE T_REC_RESULT (
             result_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,          -- 비회원 프로필 ID
-            recommended_ingredient_id INTEGER, -- 추천된 성분 ID
-            score INTEGER,                     -- 추천 점수/순위
+            user_id INTEGER NOT NULL,
+            recommended_ingredient_id INTEGER,
+            score INTEGER,
+            recommended_reasons TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES T_USER_PROFILE(user_id),
             FOREIGN KEY (recommended_ingredient_id) REFERENCES T_INGREDIENT(ingredient_id)
         );
     ''')
 
-    print("총 9개 테이블 스키마 생성 완료.") # 11개 -> 9개로 변경
+    print("총 9개 테이블 스키마 생성 완료.")
     conn.commit()
     conn.close()
 
@@ -133,25 +134,22 @@ def populate_user_selections():
         ('스트레스/마음건강', '건강 고민'), ('기억력/인지력', '건강 고민'), ('항노화/항산화', '건강 고민'),
         ('남성 건강', '건강 고민'), ('여성 건강/PMS', '건강 고민'), ('임신/임신준비', '건강 고민'),
 
+        # --- ✅ [수정] 특이사항 (별도 그룹으로 분리) ---
+        ('임산부/수유부', '특이사항'), ('알레르기/특이체질', '특이사항'),
+
         # --- 복용 약물 ---
         ('해당 없음', '복용 약물'),
-        ('혈압약', '복용 약물'),
-        ('고지혈증약/콜레스테롤약', '복용 약물'),
-        ('당뇨약', '복용 약물'),
-        ('혈전 예방약/아스피린', '복용 약물'),
-        ('위장약/제산제', '복용 약물'),
-        ('진통제/해열제 (장기 복용)', '복용 약물'),
-        ('항생제 (최근 복용 포함)', '복용 약물'),
-        ('알레르기/염증약', '복용 약물'), 
-        ('경구 피임약/호르몬제', '복용 약물'),
-        ('갑상선약', '복용 약물'),
-        ('항우울제/신경정신과약', '복용 약물')
+        ('혈압약', '복용 약물'), ('고지혈증약/콜레스테롤약', '복용 약물'), ('당뇨약', '복용 약물'),
+        ('혈전 예방약/아스피린', '복용 약물'), ('위장약/제산제', '복용 약물'),
+        ('진통제/해열제 (장기 복용)', '복용 약물'), ('항생제 (최근 복용 포함)', '복용 약물'),
+        ('알레르기/염증약', '복용 약물'), ('경구 피임약/호르몬제', '복용 약물'),
+        ('갑상선약', '복용 약물'), ('항우울제/신경정신과약', '복용 약물')
     ]
     
     cursor.executemany("INSERT OR IGNORE INTO T_USER_SELECTION (name, group_name) VALUES (?, ?)", selections_data)
     conn.commit()
     conn.close()
-    print(f"사용자 선택지 {len(selections_data)}개 입력 완료.")
+    print(f"사용자 선택지 입력 완료 (특이사항 그룹 분리됨).")
 
 # --- 헬퍼 함수들 ---
 def get_user_selections_dict(cursor):
@@ -165,16 +163,19 @@ def parse_safety_keywords(warning_text):
     if "어린이" in warning_text or "영유아" in warning_text: return ('연령', '어린이')
     return ('기타', '주의')
 
-# 성분 매핑 처리 공통 함수
 def process_mapping_for_ingredient(cursor, ing_id, func_text, selection_dict):
     cnt_map = 0
     if not func_text: return cnt_map
-    
     clean_func_text = func_text.replace('(국문)', '').replace('\n', ' ')
     for sel_name, sel_id in selection_dict.items():
+        # ✅ [수정] '건강 고민' 그룹에 속한 선택지만 매핑 대상으로 고려합니다.
+        # (특이사항이나 약물은 영양소와 긍정적인 매핑 대상이 아님)
+        cursor.execute("SELECT group_name FROM T_USER_SELECTION WHERE selection_id = ?", (sel_id,))
+        group_name = cursor.fetchone()[0]
+        if group_name != '건강 고민': continue
+        
         search_keywords = SYNONYM_DICT.get(sel_name, [])
         if not search_keywords: continue
-
         is_matched = False
         for keyword in search_keywords:
             if keyword in clean_func_text:
@@ -188,7 +189,7 @@ def process_mapping_for_ingredient(cursor, ing_id, func_text, selection_dict):
 
 # --- API 1 & 2: 식약처 원료 데이터 (I-0050, I-0040) ---
 def fetch_food_safety_ingredients(service_code, source_type_name):
-    print(f"\n--- 식약처 원료 API ({service_code} - {source_type_name}) 연동 시작 ---")
+    print(f"\n--- 식약처 원료 API ({service_code}) 연동 시작 ---")
     start_idx = 1
     total_ingr = 0; total_safe = 0; total_map = 0
 
@@ -198,12 +199,12 @@ def fetch_food_safety_ingredients(service_code, source_type_name):
         print(f"[{service_code}] 요청: {start_idx} ~ {end_idx} 호출 중...")
 
         try:
-            response = requests.get(API_URL, headers=HEADERS, timeout=15)
+            response = requests.get(API_URL, headers=HEADERS, timeout=30)
             response.raise_for_status()
             data = response.json()
             
             if service_code not in data or 'row' not in data[service_code] or not data[service_code]['row']:
-                print(f"[{service_code}] 더 이상 데이터가 없습니다. 종료. (마지막 요청: {start_idx})")
+                print(f"[{service_code}] 더 이상 데이터가 없습니다. 종료.")
                 break
 
             c_ingr, c_safe, c_map = process_ingredient_data_batch(data, service_code, source_type_name)
@@ -256,9 +257,9 @@ def process_ingredient_data_batch(data, service_code, source_type_name):
     return cnt_ingr, cnt_safe, cnt_map
 
 
-# --- API 3: e약은요 의약품 정보 (분석용 데이터 수집) ---
+# --- API 3: e약은요 의약품 정보 ---
 def fetch_and_populate_drugs_easy():
-    print("\n--- 공공데이터포털 e약은요 API 연동 시작 ---")
+    print("\n--- e약은요 API 연동 시작 ---")
     page_no = 1
     total_drugs = 0
     
@@ -267,7 +268,7 @@ def fetch_and_populate_drugs_easy():
         print(f"[e약은요] 페이지: {page_no} 호출 중...")
 
         try:
-            response = requests.get(API_URL, headers=HEADERS, timeout=15)
+            response = requests.get(API_URL, headers=HEADERS, timeout=30)
             if response.status_code != 200:
                 print(f"[e약은요] 호출 오류: 상태 코드 {response.status_code}")
                 break
@@ -275,12 +276,12 @@ def fetch_and_populate_drugs_easy():
             try:
                 data = response.json()
             except requests.exceptions.JSONDecodeError:
-                 print(f"[e약은요] JSON 파싱 오류. 응답 내용 확인 필요: {response.text[:200]}...")
+                 print(f"[e약은요] JSON 파싱 오류. 종료.")
                  break
 
             items = data.get('body', {}).get('items', [])
             if not items:
-                print(f"[e약은요] 더 이상 데이터가 없습니다. 종료. (마지막 페이지: {page_no})")
+                print(f"[e약은요] 더 이상 데이터가 없습니다. 종료.")
                 break
             
             conn = sqlite3.connect(DB_FILE)
@@ -313,7 +314,7 @@ def fetch_and_populate_drugs_easy():
 
 # --- API 4: 식약처 제품 정보 (C003) 및 데이터 마이닝 ---
 def fetch_and_populate_products_and_mine():
-    print("\n--- API 2 (품목제조신고 - C003) 전체 데이터 연동 및 마이닝 시작 ---")
+    print("\n--- API 4 (제품 정보 - C003) 연동 및 마이닝 시작 ---")
     service_code = "C003"
     start_idx = 1
     total_prod = 0
@@ -325,12 +326,12 @@ def fetch_and_populate_products_and_mine():
         print(f"[{service_code}] 요청: {start_idx} ~ {end_idx} 호출 중...")
 
         try:
-            response = requests.get(API_URL, headers=HEADERS, timeout=20)
+            response = requests.get(API_URL, headers=HEADERS, timeout=60)
             response.raise_for_status()
             data = response.json()
             
             if service_code not in data or 'row' not in data[service_code] or not data[service_code]['row']:
-                print(f"[{service_code}] 더 이상 데이터가 없습니다. 수집 종료. (마지막: {start_idx})")
+                print(f"[{service_code}] 더 이상 데이터가 없습니다. 수집 종료.")
                 break
 
             conn = sqlite3.connect(DB_FILE)
@@ -357,8 +358,6 @@ def fetch_and_populate_products_and_mine():
     print("\n--- [데이터 마이닝] 제품 정보에서 부족한 영양소 추출 시작 ---")
     mine_nutrients_from_products()
 
-
-# 데이터 마이닝 함수
 def mine_nutrients_from_products():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
@@ -400,6 +399,9 @@ def mine_nutrients_from_products():
 
 # --- 메인 실행 ---
 if __name__ == "__main__":
+    start_time = time.time()
+    print("=== 데이터베이스 구축 시작 ===")
+    
     create_database_schema()
     populate_user_selections()
     
@@ -408,4 +410,5 @@ if __name__ == "__main__":
     fetch_and_populate_drugs_easy()
     fetch_and_populate_products_and_mine()
     
-    print(f"\n\n=== 🎉 축하합니다! {DB_FILE} 최종 데이터베이스 구축이 모두 완료되었습니다! ===")
+    end_time = time.time()
+    print(f"\n\n=== 🎉 {DB_FILE} 데이터베이스 구축 완료! (소요 시간: {end_time - start_time:.2f}초) ===")
