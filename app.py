@@ -11,7 +11,7 @@ def create_app():
 
     @app.route("/")
     def home():
-        return "NutriGuide Backend Running"
+        return "NutriGuide Backend Running" #백엔드 서버 정상 작동 여부 확인
 
 
     return app
