@@ -1,28 +1,22 @@
-from flask import Flask, render_template, session, redirect, url_for
+from flask import Flask
+from config import Config
+from app.routes import register_blueprints
 
-app = Flask(__name__)
-app.secret_key = "your_secret_key"   # 세션 사용하려면 필요함
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+def create_app():
+    app = Flask(__name__, template_folder="app/templates", static_folder="app/static")
+    app.config.from_object(Config)
+    register_blueprints(app)
 
-@app.route('/login')
-def login():
-    # 나중에 구현할 예정
-    return "로그인 페이지 준비 중"
 
-@app.route('/register')
-def register():
-    return "회원가입 페이지 준비 중"
+    @app.route("/")
+    def home():
+        return "NutriGuide Backend Running"
 
-@app.route('/survey/step1')
-def survey_step1():
-    return "설문 Step 1 준비 중"
 
-@app.route('/mypage')
-def my_page():
-    return "마이페이지 준비 중"
+    return app
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
+    app = create_app()
     app.run(debug=True)
