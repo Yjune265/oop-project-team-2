@@ -1,4 +1,5 @@
 # models/database.py
+# 원래 database_web.py
 # Flask 호환성 및 기존 로직 지원을 위한 통합 DB 모듈
 
 import sqlite3
@@ -10,7 +11,7 @@ from pathlib import Path
 # =============================
 # 현재 파일(models/database.py)의 부모 폴더를 기준으로 DB 파일 경로 설정
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "supplements_final.db"
+DB_PATH = Path(__file__).parent.parent.parent / 'supplements_final.db'
 
 print(f"[DB Info] 데이터베이스 경로: {DB_PATH}")
 

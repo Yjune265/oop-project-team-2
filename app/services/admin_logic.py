@@ -1,4 +1,5 @@
 # app/services/admin_logic.py (위치는 프로젝트 구조에 따라 다를 수 있음)
+# 원래 admin_logic_web.py
 # 관리자(Admin) 전용 비즈니스 로직을 처리하는 계층입니다.
 # 통계 조회, 사용자 데이터 삭제, 시스템 백업 등을 수행합니다.
 
@@ -8,7 +9,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-# ✅ 우리가 만든 하이브리드 DB 모듈에서 필요한 기능들을 가져옵니다.
+# ✅ 제가 만든 하이브리드 DB 모듈에서 필요한 기능들을 가져옵니다.
 # DatabaseManager: 트랜잭션(삭제 등)이 필요한 복잡한 작업용
 # fetch_one, fetch_all: 간단한 조회 작업용
 # DB_PATH: 백업 기능을 위해 DB 파일의 절대 경로가 필요함
