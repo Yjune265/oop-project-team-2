@@ -1,3 +1,5 @@
+# 초기 데이터베이스 생성 (최초 1회)
+
 import sqlite3
 import requests
 import re
@@ -157,7 +159,7 @@ def get_user_selections_dict(cursor):
     return {name: sel_id for name, sel_id in cursor.fetchall()}
 
 def parse_safety_keywords(warning_text):
-    if "임산부" in warning_text or "수유부" in warning_text: return ('연령', '임산부/수유부')
+    if "임산부" in warning_text or "수유" in warning_text: return ('연령', '임산부/수유부')
     if "질환" in warning_text or "의약품" in warning_text or "고혈압" in warning_text or "당뇨" in warning_text: return ('의약품/질환', '복용약 확인')
     if "알레르기" in warning_text or "과민" in warning_text: return ('체질', '알레르기')
     if "어린이" in warning_text or "영유아" in warning_text: return ('연령', '어린이')
