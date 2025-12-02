@@ -90,5 +90,8 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
-    print("🚀 NutriGuide 서버가 시작되었습니다! http://127.0.0.1:5000")
-    app.run(debug=True)
+    print("🚀 NutriGuide 서버가 시작되었습니다!")
+    print("👉 접속 주소: http://127.0.0.1:5000")
+    
+    # ✅ [수정됨] host='0.0.0.0'을 추가하여 외부 접속(같은 와이파이, 핸드폰)도 허용
+    app.run(host='0.0.0.0', port=5000, debug=True)
