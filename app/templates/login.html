@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}로그인 | NutriGuide{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-5 col-lg-4">
+        
+        <div class="text-center mb-5">
+            <div class="bg-primary text-white d-inline-flex align-items-center justify-content-center rounded-4 mb-3 shadow-sm" style="width: 64px; height: 64px; font-size: 32px;">
+                💊
+            </div>
+            <h5 class="fw-bold mb-1" style="color: #3b82f6;">NutriGuide</h5>
+            <p class="text-muted small">건강한 식습관을 위한 영양 가이드</p>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 24px;">
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted ms-1">이메일</label>
+                    <input type="email" class="form-control bg-light border-0 py-3 rounded-4" id="email" placeholder="example@email.com" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted ms-1">비밀번호</label>
+                    <div class="position-relative">
+                        <input type="password" class="form-control bg-light border-0 py-3 rounded-4" id="password" placeholder="비밀번호를 입력하세요" required>
+                        <button type="button" class="btn position-absolute top-50 end-0 translate-middle-y text-muted" onclick="togglePw()">👁️</button>
+                    </div>
+                </div>
+
+                <div class="text-end mb-4">
+                    <a href="#" class="text-decoration-none text-muted small">비밀번호를 잊으셨나요?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-3 rounded-4 fw-bold shadow-sm">로그인</button>
+                
+                <div class="text-center mt-3">
+                    <span class="text-muted small">계정이 없으신가요?</span>
+                    <a href="{{ url_for('register') }}" class="text-decoration-none fw-bold ms-1">회원가입</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="text-center position-relative my-4">
+            <hr class="text-muted opacity-25">
+            <span class="position-absolute top-50 start-50 translate-middle bg-body px-2 text-muted small">또는 간편 로그인</span>
+        </div>
+
+        <div class="row g-2">
+            <div class="col-6">
+                <button class="btn btn-light w-100 py-2 rounded-3 border d-flex align-items-center justify-content-center gap-2 bg-white">
+                    <span style="font-weight: bold; color: #555;">G</span> Google
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="btn w-100 py-2 rounded-3 border-0 d-flex align-items-center justify-content-center gap-2" style="background-color: #FEE500; color: #3C1E1E;">
+                    <span style="font-weight: bold;">K</span> Kakao
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function togglePw() {
+        const pw = document.getElementById('password');
+        pw.type = pw.type === 'password' ? 'text' : 'password';
+    }
+
+    function handleLogin(e) {
+        e.preventDefault();
+        // 실제 API 연동은 나중에 여기에 작성
+        sessionStorage.setItem('user_id', 'test'); // 임시 로그인 처리
+        location.href = "/dashboard";
+    }
+</script>
+{% endblock %}
