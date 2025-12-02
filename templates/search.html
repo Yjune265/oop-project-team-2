@@ -1,81 +1,230 @@
 {% extends "base.html" %}
-{% block title %}영양제 검색 및 등록{% endblock %}
+{% block title %}영양제 찾기{% endblock %}
 
 {% block content %}
+<style>
+    /* 카테고리 버튼 커스텀 스타일 */
+    .cat-btn {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .cat-btn:hover {
+        transform: translateY(-3px);
+    }
+    .cat-btn.active .icon-circle {
+        background-color: #ffe4e6 !important; /* 활성화 시 핑크색 배경 */
+        border: 2px solid #ff6b6b;
+    }
+    .icon-circle {
+        width: 60px;
+        height: 60px;
+        font-size: 1.8rem;
+        background-color: #f8f9fa;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 8px;
+        transition: background-color 0.2s;
+    }
+    .cat-text {
+        font-size: 0.85rem;
+        color: #555;
+        font-weight: 600;
+        word-break: keep-all;
+    }
+</style>
+
 <div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
+    <div class="col-md-8 col-lg-6">
         
         <div class="d-flex align-items-center mb-4 mt-2">
             <a href="javascript:history.back()" class="text-dark text-decoration-none me-3">
                 <i class="bi bi-chevron-left" style="font-size: 1.2rem;">&lt;</i>
             </a>
-            <h5 class="fw-bold mb-0">영양제 검색 및 등록</h5>
+            <h5 class="fw-bold mb-0">영양제 찾기</h5>
+        </div>
+
+        <div class="mb-5">
+            <h6 class="fw-bold mb-3 ms-1">고민되는 카테고리를 선택하세요</h6>
+            <div class="row row-cols-4 row-cols-sm-4 g-3 text-center" id="categoryGrid">
+                </div>
         </div>
         
+        <hr class="my-4 border-secondary opacity-10">
+
         <div class="position-relative mb-4">
             <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">🔍</span>
-            <input type="text" id="searchInput" class="form-control bg-light border-0 py-3 ps-5 rounded-4" placeholder="제품명 검색">
-            <button class="btn btn-primary position-absolute top-50 end-0 translate-middle-y me-2 rounded-pill px-3 py-1" onclick="searchProduct()">검색</button>
+            <input type="text" id="searchInput" class="form-control bg-light border-0 py-3 ps-5 rounded-4" 
+                   placeholder="혹은 제품명으로 검색" onkeyup="if(window.event.keyCode==13){resetAndSearchText()}">
+            <button class="btn btn-dark position-absolute top-50 end-0 translate-middle-y me-2 rounded-pill px-3 py-1" 
+                    onclick="resetAndSearchText()">검색</button>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0" id="resultTitle">검색 결과</h6>
+            <span class="badge bg-light text-secondary rounded-pill" id="resultCount" style="display:none">0건</span>
         </div>
 
         <div id="searchResult" class="vstack gap-3 mb-4">
              <div class="text-center text-muted py-5 small">
-                 찾으시는 영양제 이름을 입력해주세요.
+                 카테고리를 선택하거나 제품명을 입력해주세요.
              </div>
         </div>
 
-        <div class="alert alert-primary bg-primary bg-opacity-10 border-0 rounded-4 p-4">
-            <div class="d-flex align-items-center mb-2">
-                <span class="fs-5 me-2">💡</span>
-                <h6 class="fw-bold text-primary mb-0">검색 팁</h6>
-            </div>
-            <ul class="text-muted small mb-0 ps-3" style="line-height: 1.6;">
-                <li>제품명이나 제조사로 검색할 수 있습니다</li>
-                <li>정확한 제품명을 입력하면 더 빠르게 찾을 수 있어요</li>
-            </ul>
+        <div class="text-center mb-5">
+            <button id="loadMoreBtn" class="btn btn-outline-secondary rounded-pill px-4" 
+                    style="display: none;" onclick="loadMore()">
+                더 보기 <i class="bi bi-chevron-down"></i>
+            </button>
         </div>
 
     </div>
 </div>
 
 <script>
-    async function searchProduct() {
-        const query = document.getElementById('searchInput').value;
-        if(!query) return;
+    // 카테고리 데이터 정의 (요청하신 매핑 기준)
+    const CATEGORIES = [
+        { name: '피로/활력', icon: '💪', keywords: '피로/활력' },
+        { name: '간 건강', icon: '🍺', keywords: '간 건강' },
+        { name: '다이어트', icon: '⚖️', keywords: '다이어트/체지방' },
+        { name: '혈관/순환', icon: '🩸', keywords: '혈액순환/콜레스테롤, 혈압 관리, 혈당 관리' },
+        { name: '눈 건강', icon: '👁️', keywords: '눈 건강' },
+        { name: '뼈/관절', icon: '🦴', keywords: '뼈/관절/근육' },
+        { name: '속 편한/소화', icon: '😌', keywords: '위/소화, 장 건강/변비' },
+        { name: '피부/미용', icon: '✨', keywords: '피부, 모발/두피/손톱, 항노화/항산화' },
+        { name: '면역력', icon: '🛡️', keywords: '면역력/알러지' },
+        { name: '수면/스트레스', icon: '😴', keywords: '수면 질 개선, 스트레스/마음건강, 기억력/인지력' },
+        { name: '여성', icon: '👩', keywords: '여성 건강/PMS, 임신/임신준비' },
+        { name: '남성', icon: '👨', keywords: '남성 건강' }
+    ];
 
+    // 상태 관리 변수
+    let currentKeywords = '';
+    let currentPage = 1;
+    const itemsPerPage = 10;
+    let isCategoryMode = false;
+
+    // 페이지 로드 시 카테고리 버튼 생성
+    document.addEventListener('DOMContentLoaded', () => {
+        const grid = document.getElementById('categoryGrid');
+        CATEGORIES.forEach(cat => {
+            grid.innerHTML += `
+                <div class="col">
+                    <div class="cat-btn" onclick="selectCategory(this, '${cat.name}', '${cat.keywords}')">
+                        <div class="icon-circle shadow-sm">${cat.icon}</div>
+                        <div class="cat-text">${cat.name}</div>
+                    </div>
+                </div>
+            `;
+        });
+    });
+
+    // 1. 카테고리 선택 핸들러
+    function selectCategory(element, name, keywords) {
+        // UI 활성화 처리
+        document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+
+        // 상태 초기화 및 데이터 로드
+        document.getElementById('searchInput').value = ''; // 텍스트 검색창 비우기
+        document.getElementById('resultTitle').innerText = `#${name}`;
+        
+        currentKeywords = keywords;
+        currentPage = 1;
+        isCategoryMode = true;
+        
+        document.getElementById('searchResult').innerHTML = ''; // 기존 목록 초기화
+        fetchProducts();
+    }
+
+    // 2. 텍스트 검색 핸들러
+    function resetAndSearchText() {
+        const query = document.getElementById('searchInput').value;
+        if(!query) {
+            alert('검색어를 입력해주세요');
+            return;
+        }
+
+        // 카테고리 선택 해제
+        document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('resultTitle').innerText = `'${query}' 검색 결과`;
+
+        currentKeywords = query;
+        currentPage = 1;
+        isCategoryMode = false;
+
+        document.getElementById('searchResult').innerHTML = '';
+        fetchProducts();
+    }
+
+    // 3. 더보기 버튼 핸들러
+    function loadMore() {
+        currentPage++;
+        fetchProducts();
+    }
+
+    // 4. API 데이터 호출 (핵심 로직)
+    async function fetchProducts() {
+        const btn = document.getElementById('loadMoreBtn');
+        const countSpan = document.getElementById('resultCount');
+        
         try {
-            const res = await fetch(`/api/supplement/category?q=${encodeURIComponent(query)}`);
+            // URL 생성: 페이지네이션 정보(page, limit) 포함
+            const url = `/api/supplement/category?q=${encodeURIComponent(currentKeywords)}&page=${currentPage}&limit=${itemsPerPage}`;
+            
+            const res = await fetch(url);
             const json = await res.json();
             
-            const list = document.getElementById('searchResult');
-            list.innerHTML = ''; // 기존 목록 초기화
+            if(json.status === 'success') {
+                const results = json.results;
+                
+                // 결과 개수 표시
+                countSpan.style.display = 'inline-block';
+                // (참고: 전체 개수를 API가 주면 좋지만, 일단 현재 로드된 것 기준 예시)
+                
+                if (results.length === 0) {
+                    if(currentPage === 1) {
+                        document.getElementById('searchResult').innerHTML = '<div class="text-center p-5 text-muted">해당하는 제품이 없습니다.</div>';
+                    }
+                    btn.style.display = 'none'; // 더 이상 데이터 없음
+                    return;
+                }
 
-            if(json.status === 'success' && json.results.length > 0) {
-                json.results.forEach(prod => {
-                    // 와이어프레임 카드 스타일 적용
+                // 카드 렌더링
+                const list = document.getElementById('searchResult');
+                results.forEach(prod => {
                     list.innerHTML += `
-                        <div class="card border-0 shadow-sm p-3 rounded-4 mb-2" onclick="alert('${prod.name} 선택됨')">
+                        <div class="card border-0 shadow-sm p-3 rounded-4 mb-2" onclick="location.href='/supplement/detail/${prod.id}'" style="cursor:pointer">
                             <div class="d-flex align-items-center">
-                                <div class="bg-light rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                                <div class="bg-light rounded-3 d-flex align-items-center justify-content-center me-3 text-secondary" style="width: 60px; height: 60px; font-size:1.5rem;">
                                     💊
                                 </div>
                                 <div class="flex-grow-1">
                                     <div class="d-flex justify-content-between align-items-start">
-                                        <h6 class="fw-bold mb-1 text-truncate" style="max-width: 150px;">${prod.name}</h6>
-                                        <span class="badge bg-light text-secondary border fw-normal">기타</span>
+                                        <h6 class="fw-bold mb-1 text-truncate" style="max-width: 180px;">${prod.name}</h6>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border-0 fw-normal">정보보기</span>
                                     </div>
-                                    <small class="text-muted d-block">${prod.company}</small>
+                                    <small class="text-muted d-block">${prod.company || '제조사 정보 없음'}</small>
                                 </div>
                             </div>
                         </div>
                     `;
                 });
+
+                // 더보기 버튼 처리: 가져온 데이터가 limit보다 적으면 끝난 것임
+                if (results.length < itemsPerPage) {
+                    btn.style.display = 'none';
+                } else {
+                    btn.style.display = 'inline-block';
+                }
+
             } else {
-                list.innerHTML = '<div class="text-center p-3 text-muted">검색 결과가 없습니다.</div>';
+                alert("데이터를 불러오는데 실패했습니다.");
             }
         } catch(e) {
             console.error(e);
-            alert("검색 중 오류 발생");
+            alert("서버 통신 오류");
         }
     }
 </script>
