@@ -11,27 +11,29 @@
         </div>
 
         <div class="card border-0 shadow-sm p-4" style="border-radius: 24px;">
-            <form action="{{ url_for('register') }}" method="POST"> <div class="mb-3">
+            <form action="{{ url_for('register') }}" method="POST">
+                
+                <div class="mb-3">
                     <label class="form-label small fw-bold text-muted ms-1">이름</label>
-                    <input type="text" class="form-control bg-light border-0 py-3 rounded-4" placeholder="실명을 입력해주세요" required>
+                    <input type="text" name="user_name" class="form-control bg-light border-0 py-3 rounded-4" placeholder="실명을 입력해주세요" required>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted ms-1">이메일</label>
-                    <input type="email" class="form-control bg-light border-0 py-3 rounded-4" placeholder="example@email.com" required>
+                    <input type="email" name="user_id" class="form-control bg-light border-0 py-3 rounded-4" placeholder="example@email.com" required>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted ms-1">비밀번호</label>
-                    <input type="password" class="form-control bg-light border-0 py-3 rounded-4" placeholder="영문, 숫자 포함 8자 이상" required>
+                    <input type="password" name="password" class="form-control bg-light border-0 py-3 rounded-4" placeholder="영문, 숫자 포함 8자 이상" required>
                 </div>
 
                 <div class="mb-4">
                     <label class="form-label small fw-bold text-muted ms-1">비밀번호 확인</label>
-                    <input type="password" class="form-control bg-light border-0 py-3 rounded-4" placeholder="비밀번호를 다시 입력해주세요" required>
+                    <input type="password" name="password_confirm" class="form-control bg-light border-0 py-3 rounded-4" placeholder="비밀번호를 다시 입력해주세요" required>
                 </div>
 
-                <button type="button" class="btn btn-primary w-100 py-3 rounded-4 fw-bold shadow-sm" onclick="alert('가입 기능 준비 중입니다.'); location.href='/login'">가입하기</button>
+                <button type="submit" class="btn btn-primary w-100 py-3 rounded-4 fw-bold shadow-sm">가입하기</button>
             </form>
         </div>
 

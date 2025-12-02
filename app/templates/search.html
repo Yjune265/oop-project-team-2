@@ -6,7 +6,7 @@
     <div class="col-md-6 col-lg-5">
         
         <div class="d-flex align-items-center mb-4 mt-2">
-            <a href="javascript:history.back()" class="text-dark text-decoration-none me-3">
+            <a href="{{ url_for('index') }}" class="text-dark text-decoration-none me-3">
                 <i class="bi bi-chevron-left" style="font-size: 1.2rem;">&lt;</i>
             </a>
             <h5 class="fw-bold mb-0">영양제 검색 및 등록</h5>
@@ -14,7 +14,7 @@
         
         <div class="position-relative mb-4">
             <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">🔍</span>
-            <input type="text" id="searchInput" class="form-control bg-light border-0 py-3 ps-5 rounded-4" placeholder="제품명 검색">
+            <input type="text" id="searchInput" class="form-control bg-light border-0 py-3 ps-5 rounded-4" placeholder="제품명 검색 (예: 비타민)">
             <button class="btn btn-primary position-absolute top-50 end-0 translate-middle-y me-2 rounded-pill px-3 py-1" onclick="searchProduct()">검색</button>
         </div>
 
@@ -44,27 +44,31 @@
         if(!query) return;
 
         try {
-            const res = await fetch(`/api/supplement/category?q=${encodeURIComponent(query)}`);
+            // ✅ [참고] supplement_routes.py에 '/search/api' 라우트를 만들어야 합니다.
+            // 일단은 '/api/search' 라고 가정하고 작성했습니다.
+            const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
             const json = await res.json();
             
             const list = document.getElementById('searchResult');
             list.innerHTML = ''; // 기존 목록 초기화
 
-            if(json.status === 'success' && json.results.length > 0) {
-                json.results.forEach(prod => {
-                    // 와이어프레임 카드 스타일 적용
+            // 결과가 배열이라고 가정 (backend에서 {'results': [...]} 형태로 준다면 json.results)
+            const products = json.results || json; 
+
+            if(products.length > 0) {
+                products.forEach(prod => {
                     list.innerHTML += `
-                        <div class="card border-0 shadow-sm p-3 rounded-4 mb-2" onclick="alert('${prod.name} 선택됨')">
+                        <div class="card border-0 shadow-sm p-3 rounded-4 mb-2" onclick="alert('${prod.product_name} 선택됨')">
                             <div class="d-flex align-items-center">
                                 <div class="bg-light rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
                                     💊
                                 </div>
                                 <div class="flex-grow-1">
                                     <div class="d-flex justify-content-between align-items-start">
-                                        <h6 class="fw-bold mb-1 text-truncate" style="max-width: 150px;">${prod.name}</h6>
-                                        <span class="badge bg-light text-secondary border fw-normal">기타</span>
+                                        <h6 class="fw-bold mb-1 text-truncate" style="max-width: 150px;">${prod.product_name}</h6>
+                                        <span class="badge bg-light text-secondary border fw-normal">영양제</span>
                                     </div>
-                                    <small class="text-muted d-block">${prod.company}</small>
+                                    <small class="text-muted d-block">${prod.company_name || '제조사 정보 없음'}</small>
                                 </div>
                             </div>
                         </div>
@@ -75,7 +79,7 @@
             }
         } catch(e) {
             console.error(e);
-            alert("검색 중 오류 발생");
+            list.innerHTML = '<div class="text-center p-3 text-danger">검색 중 오류가 발생했습니다.</div>';
         }
     }
 </script>

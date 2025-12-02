@@ -3,75 +3,109 @@
 
 {% block content %}
 <div class="row justify-content-center mt-3">
-    <div class="col-md-6">
-        <h3 class="fw-bold">건강 설문조사 (3/3)</h3>
+    <div class="col-md-7">
+        <h3 class="fw-bold text-center">건강 설문조사 (3/3)</h3>
         <div class="progress mt-2 mb-4" style="height: 6px;">
             <div class="progress-bar" style="width: 100%;"></div>
         </div>
 
-        <div class="custom-card mb-4">
-            <h5 class="fw-bold mb-3">현재 복용 중인 약물이 있나요?</h5>
+        <div class="custom-card mb-4 p-4 shadow-sm">
+            <h5 class="fw-bold mb-3">💊 현재 복용 중인 의약품</h5>
             <div class="d-flex flex-wrap gap-2">
-                <button class="btn btn-outline-secondary rounded-pill drug-btn">해당 없음</button>
+                <button class="btn btn-outline-secondary rounded-pill drug-btn" data-none="true">해당 없음</button>
                 <button class="btn btn-outline-secondary rounded-pill drug-btn">혈압약</button>
                 <button class="btn btn-outline-secondary rounded-pill drug-btn">당뇨약</button>
+                <button class="btn btn-outline-secondary rounded-pill drug-btn">고지혈증약</button>
+                <button class="btn btn-outline-secondary rounded-pill drug-btn">혈전 예방약</button>
+                <button class="btn btn-outline-secondary rounded-pill drug-btn">위장약/제산제</button>
+                <button class="btn btn-outline-secondary rounded-pill drug-btn">진통제/해열제(장기 복용)</button>
+                <button class="btn btn-outline-secondary rounded-pill drug-btn">항생제(최근 복용)</button>
                 <button class="btn btn-outline-secondary rounded-pill drug-btn">알레르기/염증약</button>
-                <button class="btn btn-outline-secondary rounded-pill drug-btn">항생제 (최근 복용 포함)</button>
+                <button class="btn btn-outline-secondary rounded-pill drug-btn">경구 피임약/호르몬제</button>
+                <button class="btn btn-outline-secondary rounded-pill drug-btn">갑상선약</button>
+                <button class="btn btn-outline-secondary rounded-pill drug-btn">항우울제/신경정신과약</button>
             </div>
         </div>
 
-        <button class="btn btn-primary w-100 py-3" onclick="submitSurvey()">분석 시작하기 ></button>
+        <div class="custom-card mb-5 p-4 shadow-sm">
+            <h5 class="fw-bold mb-3">🤰 임신/수유 중이거나 알레르기 체질인가요?</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-outline-secondary rounded-pill special-btn" data-none="true">해당 없음</button>
+                <button class="btn btn-outline-secondary rounded-pill special-btn">임산부/수유부</button>
+                <button class="btn btn-outline-secondary rounded-pill special-btn">알레르기/특이체질</button>
+            </div>
+        </div>
+
+        <button class="btn btn-primary w-100 py-3 rounded-4 fw-bold shadow-lg" onclick="submitSurvey()">분석 시작하기 ></button>
+
+        <form id="hiddenSurveyForm" action="{{ url_for('survey_bp.submit_survey') }}" method="POST" style="display:none;">
+            <input type="hidden" name="user_profile_json" id="inputProfile">
+            <input type="hidden" name="health_concerns_json" id="inputConcerns">
+            <input type="hidden" name="medications_json" id="inputMeds">
+        </form>
     </div>
 </div>
 
 <script>
-    document.querySelectorAll('.drug-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            this.classList.toggle('btn-outline-secondary');
-            this.classList.toggle('btn-primary');
-            this.classList.toggle('active');
-        });
-    });
+    // '해당 없음' 로직이 포함된 다중 선택 처리 함수
+    function setupExclusiveSelection(className) {
+        const buttons = document.querySelectorAll(className);
+        buttons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const isNoneBtn = this.hasAttribute('data-none');
 
-    async function submitSurvey() {
-        const meds = [];
-        document.querySelectorAll('.drug-btn.active').forEach(btn => {
-            meds.push(btn.innerText);
-        });
-
-        // 1, 2단계 데이터 가져오기
-        const userProfile = JSON.parse(sessionStorage.getItem('userProfile') || '{}');
-        const healthConcerns = JSON.parse(sessionStorage.getItem('healthConcerns') || '[]');
-
-        // 팀원 Backend가 요구하는 데이터 포맷
-        const finalData = {
-            userProfile: userProfile,
-            healthConcerns: healthConcerns,
-            medications: meds,
-            specialConditions: [] // 필요시 추가
-        };
-
-        try {
-            // API 호출 (팀원의 survey_routes.py -> /api/survey/submit)
-            const response = await fetch('/api/survey/submit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(finalData)
+                if (isNoneBtn) {
+                    // '해당 없음' 클릭 시: 나를 켜고, 나머지 다 끄기
+                    buttons.forEach(b => {
+                        if(b !== this) {
+                            b.classList.remove('active', 'btn-primary');
+                            b.classList.add('btn-outline-secondary');
+                        }
+                    });
+                    this.classList.add('active', 'btn-primary');
+                    this.classList.remove('btn-outline-secondary');
+                } else {
+                    // 일반 버튼 클릭 시: 나를 토글하고, '해당 없음'은 끄기
+                    this.classList.toggle('active');
+                    this.classList.toggle('btn-primary');
+                    this.classList.toggle('btn-outline-secondary');
+                    
+                    // 해당 없음 버튼 찾아서 끄기
+                    const noneBtn = Array.from(buttons).find(b => b.hasAttribute('data-none'));
+                    if(noneBtn) {
+                        noneBtn.classList.remove('active', 'btn-primary');
+                        noneBtn.classList.add('btn-outline-secondary');
+                    }
+                }
             });
+        });
+    }
 
-            const result = await response.json();
+    // 약물과 특이체질에 로직 적용
+    setupExclusiveSelection('.drug-btn');
+    setupExclusiveSelection('.special-btn');
 
-            if (result.status === "success") {
-                // 추천 결과를 브라우저에 저장하고 결과 페이지로 이동
-                sessionStorage.setItem('recommendationResults', JSON.stringify(result.results));
-                location.href = "/result";
-            } else {
-                alert("분석 중 오류가 발생했습니다: " + result.message);
-            }
-        } catch (error) {
-            console.error(error);
-            alert("서버 통신 오류");
-        }
+    // 최종 제출 함수
+    function submitSurvey() {
+        const meds = Array.from(document.querySelectorAll('.drug-btn.active')).map(b => b.innerText);
+        const specials = Array.from(document.querySelectorAll('.special-btn.active')).map(b => b.innerText);
+        
+        // Step 1 데이터 가져오기 (이미 식습관, 수면, 스트레스가 들어있음)
+        let userProfile = JSON.parse(sessionStorage.getItem('userProfile') || '{}');
+        
+        // 특이체질 추가 병합
+        userProfile.specialConditions = specials; 
+
+        // Step 2 데이터 가져오기
+        const healthConcerns = sessionStorage.getItem('healthConcerns') || '[]';
+
+        // 폼에 데이터 주입
+        document.getElementById('inputProfile').value = JSON.stringify(userProfile);
+        document.getElementById('inputConcerns').value = healthConcerns;
+        document.getElementById('inputMeds').value = JSON.stringify(meds);
+
+        // 제출
+        document.getElementById('hiddenSurveyForm').submit();
     }
 </script>
-{% endblock %}  
+{% endblock %}

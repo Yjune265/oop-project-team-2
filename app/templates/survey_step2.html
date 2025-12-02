@@ -3,30 +3,66 @@
 
 {% block content %}
 <div class="row justify-content-center mt-3">
-    <div class="col-md-6">
-        <h3 class="fw-bold">건강 설문조사 (2/3)</h3>
+    <div class="col-md-8">
+        <h3 class="fw-bold text-center">건강 설문조사 (2/3)</h3>
         <div class="progress mt-2 mb-4" style="height: 6px;">
             <div class="progress-bar" style="width: 66%;"></div>
         </div>
 
         <div class="custom-card mb-4">
-            <h5 class="fw-bold mb-3">개선하고 싶은 부분은? (다중 선택)</h5>
-            <div class="d-flex flex-wrap gap-2" id="concernContainer">
-                <button class="btn btn-outline-secondary rounded-pill concern-btn">피로/활력</button>
-                <button class="btn btn-outline-secondary rounded-pill concern-btn">간 건강</button>
-                <button class="btn btn-outline-secondary rounded-pill concern-btn">눈 건강</button>
-                <button class="btn btn-outline-secondary rounded-pill concern-btn">장 건강/변비</button>
-                <button class="btn btn-outline-secondary rounded-pill concern-btn">면역력/알러지</button>
-                <button class="btn btn-outline-secondary rounded-pill concern-btn">수면 질 개선</button>
-                <button class="btn btn-outline-secondary rounded-pill concern-btn">스트레스/마음건강</button>
+            <h5 class="fw-bold mb-4 text-center">
+                개선하고 싶은 건강 고민은 무엇인가요?
+                <br><span class="fs-6 text-muted fw-normal">(여러 개 선택 가능합니다)</span>
+            </h5>
+            
+            <div id="concernContainer">
+                
+                <h6 class="fw-bold text-primary mt-4 mb-2 border-bottom pb-2">💪 건강 관리</h6>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">피로/활력</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">간 건강</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">다이어트/체지방</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">혈액순환/콜레스테롤</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">혈당 관리</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">혈압 관리</button>
+                </div>
+
+                <h6 class="fw-bold text-primary mt-4 mb-2 border-bottom pb-2">👁️ 신체 부위</h6>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">눈 건강</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">뼈/관절/근육</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">위/소화</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">장 건강/변비</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">피부</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">모발/두피/손톱</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">구강 관리</button>
+                </div>
+
+                <h6 class="fw-bold text-primary mt-4 mb-2 border-bottom pb-2">🧠 일상/정신</h6>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">면역력/알러지</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">수면 질 개선</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">스트레스/마음건강</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">기억력/인지력</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">항노화/항산화</button>
+                </div>
+
+                <h6 class="fw-bold text-primary mt-4 mb-2 border-bottom pb-2">🚻 대상 특화</h6>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">남성 건강</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">여성 건강/PMS</button>
+                    <button class="btn btn-outline-secondary rounded-pill concern-btn">임신/임신준비</button>
+                </div>
+
             </div>
         </div>
 
-        <button class="btn btn-primary w-100 py-3" onclick="nextStep()">다음 Step으로 ></button>
+        <button class="btn btn-primary w-100 py-3 rounded-4 fw-bold shadow-sm" onclick="nextStep()">다음 Step으로 ></button>
     </div>
 </div>
 
 <script>
+    // 버튼 클릭 토글 (다중 선택)
     document.querySelectorAll('.concern-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             this.classList.toggle('btn-outline-secondary');
@@ -41,8 +77,12 @@
             selected.push(btn.innerText);
         });
 
+        if(selected.length === 0) { alert("최소 1개 이상의 고민을 선택해주세요."); return; }
+
         sessionStorage.setItem('healthConcerns', JSON.stringify(selected));
-        location.href = "/survey/step3";
+        
+        // Flask 라우트로 이동
+        location.href = "{{ url_for('survey_step3') }}";
     }
 </script>
 {% endblock %}

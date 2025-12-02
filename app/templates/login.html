@@ -14,16 +14,18 @@
         </div>
 
         <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 24px;">
-            <form id="loginForm" onsubmit="handleLogin(event)">
+            
+            <form action="{{ url_for('login') }}" method="POST">
+                
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted ms-1">이메일</label>
-                    <input type="email" class="form-control bg-light border-0 py-3 rounded-4" id="email" placeholder="example@email.com" required>
+                    <input type="email" name="user_id" class="form-control bg-light border-0 py-3 rounded-4" id="email" placeholder="example@email.com" required>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted ms-1">비밀번호</label>
                     <div class="position-relative">
-                        <input type="password" class="form-control bg-light border-0 py-3 rounded-4" id="password" placeholder="비밀번호를 입력하세요" required>
+                        <input type="password" name="password" class="form-control bg-light border-0 py-3 rounded-4" id="password" placeholder="비밀번호를 입력하세요" required>
                         <button type="button" class="btn position-absolute top-50 end-0 translate-middle-y text-muted" onclick="togglePw()">👁️</button>
                     </div>
                 </div>
@@ -63,16 +65,12 @@
 </div>
 
 <script>
+    // 비밀번호 눈알 아이콘 기능 (디자인 요소라 남겨둠)
     function togglePw() {
         const pw = document.getElementById('password');
         pw.type = pw.type === 'password' ? 'text' : 'password';
     }
-
-    function handleLogin(e) {
-        e.preventDefault();
-        // 실제 API 연동은 나중에 여기에 작성
-        sessionStorage.setItem('user_id', 'test'); // 임시 로그인 처리
-        location.href = "/dashboard";
-    }
+    
+    // ❌ handleLogin 함수는 백엔드 연결 방식(Form)으로 바뀌었으므로 삭제했습니다.
 </script>
 {% endblock %}

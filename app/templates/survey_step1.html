@@ -3,40 +3,69 @@
 
 {% block content %}
 <div class="row justify-content-center mt-3">
-    <div class="col-md-6">
-        <h3 class="fw-bold">건강 설문조사 (1/3)</h3>
+    <div class="col-md-7">
+        <h3 class="fw-bold text-center">건강 설문조사 (1/3)</h3>
         <div class="progress mt-2 mb-4" style="height: 6px;">
             <div class="progress-bar" style="width: 33%;"></div>
         </div>
 
         <div id="surveyForm">
-            <div class="custom-card mb-3">
-                <label class="fw-bold mb-2">나이</label>
-                <input type="number" id="age" class="form-control" placeholder="예: 25">
-            </div>
-
-            <div class="custom-card mb-3">
-                <label class="fw-bold mb-2">성별</label>
-                <div class="row g-2">
-                    <div class="col-6"><button class="btn btn-outline-primary w-100 gender-btn" data-value="male">남성</button></div>
-                    <div class="col-6"><button class="btn btn-outline-primary w-100 gender-btn" data-value="female">여성</button></div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <div class="custom-card p-3 h-100">
+                        <label class="fw-bold mb-2">나이</label>
+                        <input type="number" id="age" class="form-control" placeholder="예: 25">
+                    </div>
                 </div>
-                <input type="hidden" id="gender">
+                <div class="col-md-6">
+                    <div class="custom-card p-3 h-100">
+                        <label class="fw-bold mb-2">성별</label>
+                        <div class="row g-2">
+                            <div class="col-6"><button class="btn btn-outline-primary w-100 gender-btn" data-value="male">남성</button></div>
+                            <div class="col-6"><button class="btn btn-outline-primary w-100 gender-btn" data-value="female">여성</button></div>
+                        </div>
+                        <input type="hidden" id="gender">
+                    </div>
+                </div>
             </div>
 
-            <div class="custom-card mb-3">
-                <label class="fw-bold mb-2">수면 만족도 (1~5)</label>
-                <input type="range" class="form-range" min="1" max="5" id="sleepQuality" oninput="document.getElementById('sleepVal').innerText=this.value+'점'">
-                <div class="text-center fw-bold text-primary" id="sleepVal">3점</div>
+            <div class="custom-card mb-3 p-4">
+                <h5 class="fw-bold mb-3">💤 수면 퀄리티</h5>
+                <label class="form-label text-muted small">1점(나쁨) ~ 5점(좋음)</label>
+                <div class="d-flex align-items-center gap-3">
+                    <input type="range" class="form-range flex-grow-1" min="1" max="5" id="sleepQuality" oninput="document.getElementById('sleepVal').innerText=this.value+'점'">
+                    <div class="text-primary fw-bold fs-5" id="sleepVal">3점</div>
+                </div>
             </div>
 
-            <button class="btn btn-primary w-100 py-3" onclick="nextStep()">다음 Step으로 ></button>
+            <div class="custom-card mb-3 p-4">
+                <h5 class="fw-bold mb-3">🤯 스트레스 레벨</h5>
+                <div class="btn-group w-100" role="group">
+                    <button type="button" class="btn btn-outline-success stress-btn" data-value="낮음">낮음</button>
+                    <button type="button" class="btn btn-outline-warning stress-btn" data-value="보통">보통</button>
+                    <button type="button" class="btn btn-outline-danger stress-btn" data-value="높음">높음</button>
+                </div>
+                <input type="hidden" id="stressLevel">
+            </div>
+
+            <div class="custom-card mb-4 p-4">
+                <h5 class="fw-bold mb-3">🍽️ 평소 식습관 (다중 선택)</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-outline-secondary rounded-pill diet-btn">균형 잡힌 식사를 규칙적으로 해요</button>
+                    <button class="btn btn-outline-secondary rounded-pill diet-btn">아침을 자주 걸러요</button>
+                    <button class="btn btn-outline-secondary rounded-pill diet-btn">채소나 과일을 거의 안 먹어요</button>
+                    <button class="btn btn-outline-secondary rounded-pill diet-btn">고기나 기름진 음식을 좋아해요</button>
+                    <button class="btn btn-outline-secondary rounded-pill diet-btn">인스턴트/배달 음식을 자주 먹어요</button>
+                </div>
+            </div>
+
+            <button class="btn btn-primary w-100 py-3 rounded-4 fw-bold shadow-sm" onclick="nextStep()">다음 Step으로 ></button>
         </div>
     </div>
 </div>
 
 <script>
-    // 성별 버튼 클릭 효과
+    // 성별 버튼
     document.querySelectorAll('.gender-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('active', 'bg-primary', 'text-white'));
@@ -45,24 +74,57 @@
         });
     });
 
+    // 스트레스 버튼 (단일 선택)
+    document.querySelectorAll('.stress-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.stress-btn').forEach(b => b.classList.remove('active', 'btn-success', 'btn-warning', 'btn-danger', 'text-white'));
+            this.classList.add('active', 'text-white');
+            
+            if(this.dataset.value === '낮음') this.classList.add('btn-success');
+            if(this.dataset.value === '보통') this.classList.add('btn-warning');
+            if(this.dataset.value === '높음') this.classList.add('btn-danger');
+
+            document.getElementById('stressLevel').value = this.dataset.value;
+        });
+    });
+
+    // 식습관 버튼 (다중 선택)
+    document.querySelectorAll('.diet-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.classList.toggle('btn-outline-secondary');
+            this.classList.toggle('btn-primary');
+            this.classList.toggle('active');
+        });
+    });
+
     function nextStep() {
         const age = document.getElementById('age').value;
         const gender = document.getElementById('gender').value;
         const sleep = document.getElementById('sleepQuality').value;
+        const stress = document.getElementById('stressLevel').value;
+        
+        // 식습관 수집
+        const dietHabits = [];
+        document.querySelectorAll('.diet-btn.active').forEach(b => dietHabits.push(b.innerText));
 
-        if(!age || !gender) { alert("모든 항목을 입력해주세요."); return; }
+        // 유효성 검사
+        if(!age || !gender) { alert("나이와 성별을 입력해주세요."); return; }
+        if(!stress) { alert("스트레스 레벨을 선택해주세요."); return; }
+        if(dietHabits.length === 0) { alert("식습관을 최소 1개 선택해주세요."); return; }
 
-        // 브라우저에 임시 저장
+        // 데이터 저장
         const step1Data = {
             age: parseInt(age),
             gender: gender,
-            stressLevel: '중', // Step 1화면에 없으면 기본값 or 추가필요
             sleepQuality: parseInt(sleep),
-            dietHabits: [] // 추후 추가 가능
+            stressLevel: stress,
+            dietHabits: dietHabits
         };
+        
         sessionStorage.setItem('userProfile', JSON.stringify(step1Data));
         
-        location.href = "/survey/step2";
+        // 이동
+        location.href = "{{ url_for('survey_step2') }}";
     }
 </script>
 {% endblock %}

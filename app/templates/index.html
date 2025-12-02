@@ -12,17 +12,17 @@
     </p>
 
     {% if not session.get('user_id') %}
-        <!-- 로그인 안 되어 있을 때 -->
         <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 me-2">회원가입</a>
         <a href="{{ url_for('login') }}" class="btn btn-outline-secondary btn-lg px-4">로그인</a>
 
     {% else %}
-        <!-- 로그인 상태일 때 -->
+        <p class="text-primary fw-bold mb-3">환영합니다, {{ session.get('user_id') }}님!</p>
+        
         <a href="{{ url_for('survey_step1') }}" class="btn btn-primary btn-lg px-4 me-2">
-            설문 시작
+            설문 시작하기
         </a>
         <a href="{{ url_for('my_page') }}" class="btn btn-outline-secondary btn-lg px-4">
-            마이페이지로 이동
+            마이페이지
         </a>
     {% endif %}
 </div>
