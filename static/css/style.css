@@ -1,0 +1,161 @@
+/* =========================================
+   1. 기본 설정 (폰트, 배경, 색상 변수)
+   ========================================= */
+:root {
+    --primary-color: #3b82f6;       /* 와이어프레임의 밝은 파란색 */
+    --primary-hover: #2563eb;       /* 버튼 눌렀을 때 진한 파란색 */
+    --bg-color: #f8f9fa;            /* 전체 배경색 (아주 연한 회색) */
+    --text-dark: #333333;           /* 기본 글자색 */
+    --text-muted: #888888;          /* 회색 글자색 */
+    --card-radius: 20px;            /* 카드 모서리 둥글기 */
+    --input-bg: #f3f4f6;            /* 입력창 배경색 */
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: var(--text-dark);
+    /* 모바일 앱처럼 보이게 하기 위해 최대 너비 제한 (선택사항) */
+    max-width: 768px; 
+    margin: 0 auto; 
+    min-height: 100vh;
+    box-shadow: 0 0 20px rgba(0,0,0,0.05); /* 양옆에 그림자 */
+    background-color: white;
+}
+
+/* 링크 기본 스타일 제거 */
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* =========================================
+   2. 컴포넌트 스타일 (카드, 버튼, 입력창)
+   ========================================= */
+
+/* 둥글고 그림자 있는 카드 스타일 */
+.card, .custom-card {
+    border: none;
+    border-radius: var(--card-radius);
+    background-color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* 부드러운 그림자 */
+    transition: transform 0.2s ease;
+}
+
+/* 메인 컬러 버튼 (파란색) */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); /* 버튼 그림자 */
+}
+
+.btn-primary:hover, .btn-primary:active {
+    background-color: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+    transform: translateY(-2px);
+}
+
+/* 입력창 스타일 (회색 배경, 테두리 없음) */
+.form-control {
+    background-color: var(--input-bg);
+    border: 1px solid transparent;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 15px;
+}
+
+.form-control:focus {
+    background-color: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); /* 포커스 시 파란 번짐 효과 */
+}
+
+/* =========================================
+   3. 페이지별 특화 스타일
+   ========================================= */
+
+/* [로그인/회원가입] 소셜 로그인 버튼 */
+.btn-social {
+    border-radius: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* [대시보드] 상단 파란색 헤더 영역 */
+.dashboard-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 30px 20px 40px; /* 아래쪽 여백 넉넉히 */
+    border-bottom-left-radius: 30px;
+    border-bottom-right-radius: 30px;
+    margin-bottom: 20px;
+}
+
+/* [대시보드] 날짜 선택 박스 */
+.date-selector .active {
+    background-color: white;
+    color: var(--primary-color);
+    border-radius: 12px;
+    padding: 8px 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* [대시보드] 진행률 바 */
+.progress {
+    background-color: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background-color: var(--primary-color);
+    border-radius: 10px;
+}
+
+/* [검색] 영양제 리스트 아이템 */
+.list-group-item {
+    border: none;
+    margin-bottom: 10px;
+    border-radius: 16px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    padding: 15px;
+    transition: background-color 0.2s;
+}
+
+.list-group-item:hover {
+    background-color: #f8faff; /* 마우스 올리면 살짝 파랗게 */
+}
+
+/* [설문조사] 선택지 버튼 */
+.btn-outline-secondary {
+    border-radius: 50px; /* 캡슐 모양 */
+    border: 1px solid #ddd;
+    color: #555;
+    background-color: white;
+    padding: 8px 16px;
+    margin: 4px;
+}
+
+.btn-outline-secondary:hover, .btn-outline-secondary.active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+/* [결과] 하단 고정 버튼 영역 */
+.fixed-bottom-btn {
+    position: fixed;
+    bottom: 0;
+    left: 0; 
+    right: 0;
+    padding: 20px;
+    background: linear-gradient(to top, white 80%, transparent); /* 아래쪽 흰색 그라데이션 */
+    max-width: 768px; /* body max-width와 맞춤 */
+    margin: 0 auto;
+}
