@@ -1,18 +1,40 @@
 {% extends "base.html" %}
-{% block title %}영양제 검색{% endblock %}
+{% block title %}영양제 검색 및 등록{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-6">
-        <h4 class="fw-bold mb-3">영양제 검색</h4>
+    <div class="col-md-6 col-lg-5">
         
-        <div class="input-group mb-4">
-            <input type="text" id="searchInput" class="form-control" placeholder="성분명 (예: 간 건강, 비타민)">
-            <button class="btn btn-primary" onclick="searchProduct()">검색</button>
+        <div class="d-flex align-items-center mb-4 mt-2">
+            <a href="javascript:history.back()" class="text-dark text-decoration-none me-3">
+                <i class="bi bi-chevron-left" style="font-size: 1.2rem;">&lt;</i>
+            </a>
+            <h5 class="fw-bold mb-0">영양제 검색 및 등록</h5>
+        </div>
+        
+        <div class="position-relative mb-4">
+            <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">🔍</span>
+            <input type="text" id="searchInput" class="form-control bg-light border-0 py-3 ps-5 rounded-4" placeholder="제품명 검색">
+            <button class="btn btn-primary position-absolute top-50 end-0 translate-middle-y me-2 rounded-pill px-3 py-1" onclick="searchProduct()">검색</button>
         </div>
 
-        <div id="searchResult" class="list-group">
+        <div id="searchResult" class="vstack gap-3 mb-4">
+             <div class="text-center text-muted py-5 small">
+                 찾으시는 영양제 이름을 입력해주세요.
+             </div>
+        </div>
+
+        <div class="alert alert-primary bg-primary bg-opacity-10 border-0 rounded-4 p-4">
+            <div class="d-flex align-items-center mb-2">
+                <span class="fs-5 me-2">💡</span>
+                <h6 class="fw-bold text-primary mb-0">검색 팁</h6>
             </div>
+            <ul class="text-muted small mb-0 ps-3" style="line-height: 1.6;">
+                <li>제품명이나 제조사로 검색할 수 있습니다</li>
+                <li>정확한 제품명을 입력하면 더 빠르게 찾을 수 있어요</li>
+            </ul>
+        </div>
+
     </div>
 </div>
 
@@ -21,26 +43,35 @@
         const query = document.getElementById('searchInput').value;
         if(!query) return;
 
-        // 팀원의 supplement_routes.py -> /api/supplement/category?q=...
         try {
             const res = await fetch(`/api/supplement/category?q=${encodeURIComponent(query)}`);
             const json = await res.json();
             
             const list = document.getElementById('searchResult');
-            list.innerHTML = '';
+            list.innerHTML = ''; // 기존 목록 초기화
 
             if(json.status === 'success' && json.results.length > 0) {
                 json.results.forEach(prod => {
+                    // 와이어프레임 카드 스타일 적용
                     list.innerHTML += `
-                        <div class="list-group-item list-group-item-action p-3">
-                            <h6 class="fw-bold mb-1">${prod.name}</h6>
-                            <small class="text-muted">${prod.company}</small>
-                            <p class="small text-truncate mt-1 mb-0">${prod.ingredients_summary}</p>
+                        <div class="card border-0 shadow-sm p-3 rounded-4 mb-2" onclick="alert('${prod.name} 선택됨')">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                                    💊
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h6 class="fw-bold mb-1 text-truncate" style="max-width: 150px;">${prod.name}</h6>
+                                        <span class="badge bg-light text-secondary border fw-normal">기타</span>
+                                    </div>
+                                    <small class="text-muted d-block">${prod.company}</small>
+                                </div>
+                            </div>
                         </div>
                     `;
                 });
             } else {
-                list.innerHTML = '<div class="text-center p-3">검색 결과가 없습니다.</div>';
+                list.innerHTML = '<div class="text-center p-3 text-muted">검색 결과가 없습니다.</div>';
             }
         } catch(e) {
             console.error(e);
