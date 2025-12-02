@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}영양제 검색{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h4 class="fw-bold mb-3">영양제 검색</h4>
+        
+        <div class="input-group mb-4">
+            <input type="text" id="searchInput" class="form-control" placeholder="성분명 (예: 간 건강, 비타민)">
+            <button class="btn btn-primary" onclick="searchProduct()">검색</button>
+        </div>
+
+        <div id="searchResult" class="list-group">
+            </div>
+    </div>
+</div>
+
+<script>
+    async function searchProduct() {
+        const query = document.getElementById('searchInput').value;
+        if(!query) return;
+
+        // 팀원의 supplement_routes.py -> /api/supplement/category?q=...
+        try {
+            const res = await fetch(`/api/supplement/category?q=${encodeURIComponent(query)}`);
+            const json = await res.json();
+            
+            const list = document.getElementById('searchResult');
+            list.innerHTML = '';
+
+            if(json.status === 'success' && json.results.length > 0) {
+                json.results.forEach(prod => {
+                    list.innerHTML += `
+                        <div class="list-group-item list-group-item-action p-3">
+                            <h6 class="fw-bold mb-1">${prod.name}</h6>
+                            <small class="text-muted">${prod.company}</small>
+                            <p class="small text-truncate mt-1 mb-0">${prod.ingredients_summary}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                list.innerHTML = '<div class="text-center p-3">검색 결과가 없습니다.</div>';
+            }
+        } catch(e) {
+            console.error(e);
+            alert("검색 중 오류 발생");
+        }
+    }
+</script>
+{% endblock %}
