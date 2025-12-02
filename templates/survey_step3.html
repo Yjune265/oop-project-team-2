@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}설문조사 Step 3{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-3">
+    <div class="col-md-6">
+        <h3 class="fw-bold">건강 설문조사 (3/3)</h3>
+        <div class="progress mt-2 mb-4" style="height: 6px;">
+            <div class="progress-bar" style="width: 100%;"></div>
+        </div>
+
+        <div class="custom-card mb-4">
+            <h5 class="fw-bold mb-3">현재 복용 중인 약물이 있나요?</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-outline-secondary rounded-pill drug-btn">해당 없음</button>
+                <button class="btn btn-outline-secondary rounded-pill drug-btn">혈압약</button>
+                <button class="btn btn-outline-secondary rounded-pill drug-btn">당뇨약</button>
+                <button class="btn btn-outline-secondary rounded-pill drug-btn">알레르기/염증약</button>
+                <button class="btn btn-outline-secondary rounded-pill drug-btn">항생제 (최근 복용 포함)</button>
+            </div>
+        </div>
+
+        <button class="btn btn-primary w-100 py-3" onclick="submitSurvey()">분석 시작하기 ></button>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.drug-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.classList.toggle('btn-outline-secondary');
+            this.classList.toggle('btn-primary');
+            this.classList.toggle('active');
+        });
+    });
+
+    async function submitSurvey() {
+        const meds = [];
+        document.querySelectorAll('.drug-btn.active').forEach(btn => {
+            meds.push(btn.innerText);
+        });
+
+        // 1, 2단계 데이터 가져오기
+        const userProfile = JSON.parse(sessionStorage.getItem('userProfile') || '{}');
+        const healthConcerns = JSON.parse(sessionStorage.getItem('healthConcerns') || '[]');
+
+        // 팀원 Backend가 요구하는 데이터 포맷
+        const finalData = {
+            userProfile: userProfile,
+            healthConcerns: healthConcerns,
+            medications: meds,
+            specialConditions: [] // 필요시 추가
+        };
+
+        try {
+            // API 호출 (팀원의 survey_routes.py -> /api/survey/submit)
+            const response = await fetch('/api/survey/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(finalData)
+            });
+
+            const result = await response.json();
+
+            if (result.status === "success") {
+                // 추천 결과를 브라우저에 저장하고 결과 페이지로 이동
+                sessionStorage.setItem('recommendationResults', JSON.stringify(result.results));
+                location.href = "/result";
+            } else {
+                alert("분석 중 오류가 발생했습니다: " + result.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("서버 통신 오류");
+        }
+    }
+</script>
+{% endblock %}  
