@@ -9,6 +9,11 @@ def create_app():
     # 2. config.py 설정 적용
     app.config.from_object(Config)
     
+    # [추가] 세션 사용을 위한 시크릿 키 안전장치 (Config에 없으면 기본값 사용)
+    # 이게 없으면 "Free Pass" 로그인할 때 에러가 날 수도 있어서 추가했습니다.
+    if not app.config.get('SECRET_KEY'):
+        app.secret_key = 'dev_secret_key_for_mvp'
+
     # 3. 한글 깨짐 방지
     app.config['JSON_AS_ASCII'] = False
     
@@ -32,7 +37,7 @@ def create_app():
             
             # 세션에 "이 사람 로그인했음" 도장 찍기
             session['user_id'] = user_id
-            session['user_name'] = "체험단"  # 이름은 고정값 (원하면 form에서 받아도 됨)
+            session['user_name'] = "체험단"  # 이름은 고정값
             
             # 메인 페이지로 이동
             return redirect(url_for('index'))
@@ -59,6 +64,11 @@ def create_app():
     @app.route("/mypage")
     def my_page():
         return render_template("mypage.html")
+
+    # ✅ [추가됨] 검색 페이지 연결 (주소: /search)
+    @app.route("/search")
+    def search_page():
+        return render_template("search.html")
 
     @app.route("/survey/step1")
     def survey_step1():
