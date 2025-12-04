@@ -227,23 +227,59 @@ def process_ingredient_data_batch(data, service_code, source_type_name):
 
     rows = data.get(service_code, {}).get('row', [])
     for item in rows:
-        raw_name = item.get('RAWMTRL_NM')
+        # ==========================================
+        # 1. 원료명(Name) 파싱 로직 개선
+        # ==========================================
+        # I-0050은 'RAWMTRL_NM', I-0040은 'APLC_RAWMTRL_NM'을 씁니다.
+        raw_name = item.get('RAWMTRL_NM') 
+        if not raw_name:
+            raw_name = item.get('APLC_RAWMTRL_NM')
+        
+        # 그래도 없으면(혹시 모를 예외) 건너뜀
         if not raw_name: continue
+        
+        # 이름 정제: "두충우슬추출복합물(KGC08EA)..." -> "두충우슬추출복합물"
+        # 괄호 앞부분만 깔끔하게 잘라냅니다.
         ingr_name = re.split(r'\(', raw_name)[0].strip()
-        func_text = item.get('PRIMARY_FNCLTY')
 
+        # ==========================================
+        # 2. 기능성 내용(Summary) 파싱 로직 개선
+        # ==========================================
+        # I-0050은 'PRIMARY_FNCLTY', I-0040은 'FNCLTY_CN'을 씁니다.
+        func_text = item.get('PRIMARY_FNCLTY')
+        if not func_text:
+            func_text = item.get('FNCLTY_CN')
+
+        # ==========================================
+        # 3. 섭취량(RDA) 파싱 로직 개선
+        # ==========================================
+        # I-0050은 LOW/HIGH LIMIT으로 나뉘어 있고, I-0040은 DAY_INTK_CN 텍스트 하나입니다.
+        rda_text = item.get('DAY_INTK_LOWLIMIT')
+        ul_text = item.get('DAY_INTK_HIGHLIMIT')
+        
+        # I-0040인 경우 (상한/하한 키가 없으면) 섭취량 텍스트 전체를 RDA 컬럼에 넣습니다.
+        if not rda_text and not ul_text:
+            rda_text = item.get('DAY_INTK_CN')
+
+        # DB 저장 (T_INGREDIENT)
         cursor.execute('''INSERT OR IGNORE INTO T_INGREDIENT (name_kor, summary, rda, ul, source_type) VALUES (?, ?, ?, ?, ?)''', 
-                       (ingr_name, func_text, item.get('DAY_INTK_LOWLIMIT'), item.get('DAY_INTK_HIGHLIMIT'), source_type_name))
+                       (ingr_name, func_text, rda_text, ul_text, source_type_name))
+        
         if cursor.rowcount > 0: cnt_ingr += 1
 
+        # 방금 저장한(또는 이미 있는) ID 가져오기
         cursor.execute("SELECT ingredient_id FROM T_INGREDIENT WHERE name_kor = ?", (ingr_name,))
         res = cursor.fetchone()
         if not res: continue
         ing_id = res[0]
 
+        # ==========================================
+        # 4. 주의사항(Safety) 파싱
+        # ==========================================
         cautions = item.get('IFTKN_ATNT_MATR_CN')
         if cautions:
-            rules = re.split(r'\(\d\)|\n|①|②|③|④|⑤', cautions)
+            # 특수문자나 번호 등을 기준으로 쪼개서 저장
+            rules = re.split(r'\(\d\)|\n|①|②|③|④|⑤|◆', cautions)
             for rule in rules:
                 rule = rule.strip()
                 if len(rule) > 5:
@@ -252,6 +288,7 @@ def process_ingredient_data_batch(data, service_code, source_type_name):
                                    (ing_id, rule, t_type, t_name))
                     cnt_safe += 1
         
+        # 매핑 로직 실행
         cnt_map += process_mapping_for_ingredient(cursor, ing_id, func_text, selection_dict)
 
     conn.commit()
