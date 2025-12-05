@@ -23,7 +23,18 @@
                     
                     <h5 class="fw-bold mb-2">{{ item.name }}</h5>
                     
-                    
+                    <div class="p-3 rounded bg-light mb-2">
+                        <p class="text-muted small mb-2 summary-container collapsed" id="summary-{{ loop.index }}">
+                            {{ item.summary }}
+                        </p>
+
+                        <button class="btn btn-link p-0 text-primary"
+                                style="font-size: 0.75rem;"
+                                onclick="toggleSummary(this)">
+                            더보기
+                        </button>
+                        
+                    </div>
                     
                     <div class="small text-info mb-2">
                         <i class="bi bi-check-circle"></i> 추천 이유: 
@@ -34,7 +45,7 @@
 
                     {% if item.products %}
                     <div class="mt-3 bg-light p-3 rounded">
-                        <small class="fw-bold text-muted">추천 제품 예시:</small>
+                        <small class="fw-bold text-muted">추천 제품 :</small>
                         <ul class="mb-0 small text-muted ps-3">
                             {% for product in item.products %}
                             <li>{{ product.company_name }} - {{ product.product_name }}</li>

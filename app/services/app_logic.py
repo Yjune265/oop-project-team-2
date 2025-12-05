@@ -238,7 +238,7 @@ class RecommendationEngine:
         for row in cursor.fetchall():
             self.filtered_ingredients.add(row['ingredient_id'])
         
-        # 4. 점수 목록에서 필터링된 성분 제거
+        # 4. 점수 목록에서 필터링된 성분 제거x
         for bad_id in self.filtered_ingredients:
             if bad_id in self.score_data:
                 del self.score_data[bad_id] # 핵심: 아예 삭제
@@ -276,16 +276,32 @@ class RecommendationEngine:
             ORDER BY random() -- 랜덤하게 다양한 제품 노출
         ''', (search_term, search_term))
         
-        safe_products = []
+        ranked_products = []
+
         for row in cursor.fetchall():
-            if self._is_safe_product(cursor, row['precautions']):
-                safe_products.append({
-                    'product_name': row['product_name'],
-                    'company_name': row['company_name']
-                })
-                if len(safe_products) >= limit:
+            if not self._is_safe_product(cursor, row['precautions']):
+                continue
+
+            main_ing = (row['main_ingredients_text'] or "").replace(" ", "")
+            ingredients = main_ing.split(',')
+
+            # 등장 위치 기반 점수 - 가장 앞에 등장할수록 높은 점수 부여
+            score = 0
+            for idx, ing in enumerate(ingredients):
+                if clean_name in ing:
+                    score = 100 - idx
                     break
-        return safe_products
+            
+            ranked_products.append({
+                'product_name': row['product_name'],
+                'company_name': row['company_name'],
+                'score': score  
+            })
+
+        # 점수 높은 순으로 정렬하고 상위 limit개 반환
+        ranked_products.sort(key=lambda x: x['score'], reverse=True)
+        return ranked_products[:limit]
+
 
     def finalize_and_log_results(self, cursor, top_n=3):
         """Step 4: 최종 결과 생성 및 DB 로깅"""
