@@ -195,13 +195,84 @@ def create_database_schema():
     cursor.execute("PRAGMA foreign_keys = ON;")
 
     # --- 기본 테이블 생성 ---
-    cursor.execute('''CREATE TABLE T_USER_SELECTION (selection_id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL UNIQUE, group_name VARCHAR(100));''')
-    cursor.execute('''CREATE TABLE T_INGREDIENT (ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT, name_kor VARCHAR(100) NOT NULL UNIQUE, summary TEXT, rda TEXT, ul TEXT, source_type VARCHAR(20));''')
-    cursor.execute('''CREATE TABLE T_REC_MAPPING (mapping_id INTEGER PRIMARY KEY AUTOINCREMENT, selection_id INTEGER NOT NULL, ingredient_id INTEGER NOT NULL, base_score INTEGER DEFAULT 10, FOREIGN KEY (selection_id) REFERENCES T_USER_SELECTION(selection_id), FOREIGN KEY (ingredient_id) REFERENCES T_INGREDIENT(ingredient_id), UNIQUE(selection_id, ingredient_id));''')
-    cursor.execute('''CREATE TABLE T_SAFETY (safety_id INTEGER PRIMARY KEY AUTOINCREMENT, ingredient_id INTEGER NOT NULL, target_type VARCHAR(50) DEFAULT '기타', target_name VARCHAR(100) DEFAULT '주의', risk_level INTEGER DEFAULT 2, warning_message TEXT NOT NULL, FOREIGN KEY (ingredient_id) REFERENCES T_INGREDIENT(ingredient_id));''')
-    cursor.execute('''CREATE TABLE T_PRODUCT (product_id INTEGER PRIMARY KEY AUTOINCREMENT, product_name VARCHAR(255) NOT NULL, company_name VARCHAR(100), main_ingredients_text TEXT, precautions TEXT, api_source_id VARCHAR(100) UNIQUE);''')
-    cursor.execute('''CREATE TABLE T_USER_PROFILE (user_id INTEGER PRIMARY KEY AUTOINCREMENT, age INTEGER, gender VARCHAR(10), stress_level VARCHAR(10), sleep_quality INTEGER, diet_habits TEXT, medications_etc TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);''')
-    cursor.execute('''CREATE TABLE T_USER_CHOICES (user_id INTEGER NOT NULL, selection_id INTEGER NOT NULL, FOREIGN KEY (user_id) REFERENCES T_USER_PROFILE(user_id), FOREIGN KEY (selection_id) REFERENCES T_USER_SELECTION(selection_id), PRIMARY KEY (user_id, selection_id));''')
+    # T_USER_SELECTION
+    cursor.execute('''
+        CREATE TABLE T_USER_SELECTION (
+            selection_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(100) NOT NULL UNIQUE,
+            group_name VARCHAR(100)
+        );''')
+    
+    # T_INGREDIENT
+    cursor.execute('''
+        CREATE TABLE T_INGREDIENT (
+            ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name_kor VARCHAR(100) NOT NULL UNIQUE,
+            summary TEXT,
+            rda TEXT,
+            ul TEXT,
+            source_type VARCHAR(20)
+        );''')
+    
+    # T_REC_MAPPING
+    cursor.execute('''
+        CREATE TABLE T_REC_MAPPING (
+            mapping_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            selection_id INTEGER NOT NULL,
+            ingredient_id INTEGER NOT NULL,
+            base_score INTEGER DEFAULT 10,
+            FOREIGN KEY (selection_id) REFERENCES T_USER_SELECTION(selection_id),
+            FOREIGN KEY (ingredient_id) REFERENCES T_INGREDIENT(ingredient_id),
+            UNIQUE(selection_id, ingredient_id)
+        );''')
+    
+    # T_SAFETY
+    cursor.execute('''
+        CREATE TABLE T_SAFETY (
+            safety_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ingredient_id INTEGER NOT NULL,
+            target_type VARCHAR(50) DEFAULT '기타',
+            target_name VARCHAR(100) DEFAULT '주의',
+            risk_level INTEGER DEFAULT 2,
+            warning_message TEXT NOT NULL,
+            FOREIGN KEY (ingredient_id) REFERENCES T_INGREDIENT(ingredient_id)
+        );''')
+    
+    # T_PRODUCT
+    cursor.execute('''
+        CREATE TABLE T_PRODUCT (
+            product_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_name VARCHAR(255) NOT NULL,
+            company_name VARCHAR(100),
+            main_ingredients_text TEXT,
+            precautions TEXT,
+            api_source_id VARCHAR(100) UNIQUE
+        );''')
+    
+    # T_USER_PROFILE
+    cursor.execute('''
+        CREATE TABLE T_USER_PROFILE (
+            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            age INTEGER,
+            gender VARCHAR(10),
+            stress_level VARCHAR(10),
+            sleep_quality INTEGER,
+            diet_habits TEXT,
+            medications_etc TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );''')
+    
+    # T_USER_CHOICES
+    cursor.execute('''
+        CREATE TABLE T_USER_CHOICES (
+            user_id INTEGER NOT NULL,
+            selection_id INTEGER NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES T_USER_PROFILE(user_id),
+            FOREIGN KEY (selection_id) REFERENCES T_USER_SELECTION(selection_id),
+            PRIMARY KEY (user_id, selection_id)
+        );
+    ''')
+
     cursor.execute('''
         CREATE TABLE T_DRUG (
             drug_id INTEGER PRIMARY KEY AUTOINCREMENT,
